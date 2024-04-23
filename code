@@ -1,0 +1,72 @@
+--A
+create database if not EXISTS Lab01;
+use Lab01;
+
+create table NCC(
+    varchar MSNCC primary key,
+    varchar TenNCC,
+    varchar Địachỉ,
+);
+
+create table Mặthàng(
+    varchar MSMH primary key,
+    varchar TenMH,
+    varchar Màusắc,
+);
+
+create table Cungcap(
+    varchar MSNCC primary key,
+    varchar MSMH primary key,
+    varchar Giátiền,
+);
+
+insert into NCC (MSNCC,TenNCC,Địachỉ) VALUES
+('NCC1', 'Cty A', 'Hai Ba Trung, Ha Noi'),
+('NCC2', 'Cty B', 'Hoan Kiem, Ha Noi'),
+('NCC3', 'Cty C', 'Huong Khe, Ha Tinh');
+INSERT INTO Mathang(MSMH,tenmh,mausac) VALUES
+('MH1', 'Mat hang 1', 'do'),
+('MH2', 'Mat hang 2', 'tim'),
+('MH3', 'Mat hang 3', 'xanh'),
+('MH4', 'Mat hang 4', 'do'),
+('MH5', 'Mat hang 5', 'do');
+INSERT INTO CungCap (MSNCC, MSMH, GiaTien) VALUES 
+('NCC1', 'MH1', 150),
+('NCC1', 'MH2', 250),
+('NCC1', 'MH3', 350),
+('NCC1', 'MH4', 50),
+('NCC1', 'MH5', 245),
+('NCC2', 'MH1', 50),
+('NCC2', 'MH2', 450),
+('NCC2', 'MH3', 250),
+('NCC2', 'MH4', 150);
+
+--B
+--1
+select * from NCC;
+--2
+select * from NCC where Địachỉ LIKE %Ha Noi%;
+--3
+select * from Mathang where mausac = 'do';
+--4
+select MSNCC,MSMH from CungCap where GiaTien between 50 and 150;
+--5
+select MSMH,GiaTien from CungCap where MSNCC = 'NCC1';
+--6
+select MSMH,GiaTien from CungCap where MSNCC = 'NCC1' and GiaTien < 100;
+--7
+select MSMH,GiaTien from CungCap order by GiaTien desc;
+--8
+select MSMH,GiaTien from CungCap order by MSNCC desc, GiaTien desc;
+--9
+update Mathang set mausac = 'xanh' where MSMH = 'MH5';
+--10
+select MSNCC,count(MSMH) as somathang from CungCap group by MSNCC;
+--11
+select mausac,count(MSMH) as sosanpham from Mathang group by mausac;
+--12
+delete from CungCap where GiaTien >200;
+
+
+
+
