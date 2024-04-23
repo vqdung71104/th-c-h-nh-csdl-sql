@@ -1,0 +1,116 @@
+--A 
+\encoding 'UTF8'
+--create table
+CREATE TABLE GiangVien (
+    GV VARCHAR(5) PRIMARY KEY,
+    HoTen VARCHAR(50),
+    DiaChi VARCHAR(100),
+    NgaySinh DATE
+);
+
+CREATE TABLE DeTai (
+    DT VARCHAR(5) PRIMARY KEY,
+    TenDT VARCHAR(100),
+    Cap VARCHAR(50),
+    KinhPhi NUMERIC(10, 2)
+);
+
+CREATE TABLE ThamGia (
+    GV VARCHAR(5),
+    DT VARCHAR(5),
+    SoGio INT,
+    FOREIGN KEY (GV) REFERENCES GiangVien(GV),
+    FOREIGN KEY (DT) REFERENCES DeTai(DT),
+    PRIMARY KEY (GV, DT)
+);
+
+INSERT INTO GiangVien (GV, HoTen, DiaChi, NgaySinh) VALUES
+('GV01', 'Vũ Tuyết Trinh', 'Hoàng Mai, Hà Nội', '1975-10-10'),
+('GV02', 'Nguyễn Nhật Quang', 'Hai Bà Trưng, Hà Nội', '1976-11-03'),
+('GV03', 'Trần Đức Khánh', 'Đống Đa, Hà Nội', '1977-06-04'),
+('GV04', 'Nguyễn Hồng Phương', 'Tây Hồ, Hà Nội', '1983-12-10'),
+('GV05', 'Lê Thanh Hương', 'Hai Bà Trưng, Hà Nội', '1976-10-10');
+
+INSERT INTO DeTai (DT, TenDT, Cap, KinhPhi) VALUES
+('DT01', 'Tính toán lưới Nhà nước', 'Nhà nước', 700),
+('DT02', 'Phát hiện tri thức Bộ', 'Bộ', 300),
+('DT03', 'Phân loại văn bản', 'Bộ', 270),
+('DT04', 'Dịch tự động Anh Việt', 'Trường', 30);
+
+INSERT INTO ThamGia (GV, DT, SoGio) VALUES
+('GV01', 'DT01', 100),
+('GV01', 'DT02', 80),
+('GV01', 'DT03', 80),
+('GV02', 'DT01', 120),
+('GV02', 'DT03', 140),
+('GV03', 'DT03', 150),
+('GV04', 'DT04', 180);
+--B
+--1 Đưa ra thông tin giảng viên có địa chỉ ở quận “Hai Bà Trưng”, sắp xếp theo thứ tự giảm
+-- dần của họ tên.
+SELECT * from GiangVien
+WHERE DiaChi LIKE '%Hai Bà Trưng%'
+ORDER BY HoTen DESC;
+--2 Đưa ra danh sách gồm họ tên, địa chỉ, ngày sinh của giảng viên có tham gia vào đề tài
+-- “Tính toán lưới”.
+SELECT gv.HoTen, gv.DiaChi, gv.NgaySinh
+FROM GiangVien gv
+WHERE gv.GV IN (
+    SELECT TG.GV
+    FROM ThamGia TG
+    JOIN DeTai DT ON TG.DT = DT.DT
+    WHERE DT.TenDT = 'Tính toán lưới Nhà nước'
+);
+--3 Đưa ra danh sách gồm họ tên, địa chỉ, ngày sinh của giảng viên có tham gia vào đề tài “Phân loại văn bản” hoặc “Dịch tự động Anh Việt”:
+SELECT gv.HoTen, gv.DiaChi, gv.NgaySinh
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+JOIN DeTai dt ON tg.DT = dt.DT
+WHERE dt.TenDT IN ('Phân loại văn bản', 'Dịch tự động Anh Việt');
+--4 Cho biết thông tin giảng viên tham gia ít nhất 2 đề tài
+SELECT gv.GV, gv.HoTen
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+GROUP BY gv.GV, gv.HoTen
+HAVING COUNT(tg.DT) >= 2;
+--5 Cho biết tên giảng viên tham gia nhiều đề tài nhất
+SELECT gv.GV, gv.HoTen
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+GROUP BY gv.GV, gv.HoTen
+ORDER BY COUNT(tg.DT) DESC
+limit 1;
+--6 Đề tài nào tốn ít kinh phí nhất?
+SELECT DT, TenDT, KinhPhi
+FROM DeTai
+ORDER BY KinhPhi
+LIMIT 1;
+--7 Cho biết tên và ngày sinh của giảng viên sống ở quận Tây Hồ và tên các đề tài mà giảng viên này tham gia
+SELECT gv.HoTen, gv.NgaySinh, dt.TenDT
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+JOIN DeTai dt ON tg.DT = dt.DT
+WHERE gv.DiaChi LIKE '%Tây Hồ%';
+--8 Cho biết tên những giảng viên sinh trước năm 1980 và có tham gia đề tài “Phân loại văn bản”:
+SELECT gv.HoTen, gv.NgaySinh
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+JOIN DeTai dt ON tg.DT = dt.DT
+WHERE gv.NgaySinh < '1980-01-01' AND dt.TenDT = 'Phân loại văn bản';
+--9 Đưa ra mã giảng viên, tên giảng viên và tổng số giờ tham gia nghiên cứu khoa học của từng giảng viên:
+SELECT gv.GV, gv.HoTen, SUM(tg.SoGio) AS TongSoGio
+FROM GiangVien gv
+JOIN ThamGia tg ON gv.GV = tg.GV
+GROUP BY gv.GV, gv.HoTen;
+--10 Giảng viên Ngô Tuấn Phong mới tham gia nghiên cứu đề tài khoa học
+INSERT INTO GiangVien (GV, HoTen, DiaChi, NgaySinh)
+VALUES ('GV06', 'Ngô Tuấn Phong', 'Đống Đa, Hà Nội', '1986-09-08');
+--11 Giảng viên Vũ Tuyết Trinh chuyển về sống tại quận Tây Hồ, Hà Nội
+UPDATE GiangVien
+SET DiaChi = 'Tây Hồ, Hà Nội'
+WHERE HoTen = 'Vũ Tuyết Trinh';
+--12 Xóa thông tin của giảng viên có mã GV02
+DELETE FROM GiangVien
+WHERE GV = 'GV02'
+DELETE FROM ThamGia
+WHERE GV = 'GV02';
