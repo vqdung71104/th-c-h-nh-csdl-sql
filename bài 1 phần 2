@@ -1,0 +1,174 @@
+--A
+CREATE DATABASE IF NOT EXISTS Lab01A;
+USE Lab01A;
+--NCC(MSNCC, TênNCC, Địachỉ)
+CREATE TABLE NCC (
+    MSNCC VARCHAR(10) PRIMARY KEY,
+    TenNCC VARCHAR(50),
+    DiaChi VARCHAR(100)
+);
+
+--Mặthàng(MSMH, TênMH, Màusắc)
+CREATE TABLE MatHang (
+    MSMH VARCHAR(10) PRIMARY KEY,
+    TenMH VARCHAR(50),
+    MauSac VARCHAR(20)
+);
+--Cungcấp(MSNCC, MSMH, Giátiền)
+CREATE TABLE CungCap (
+    MSNCC VARCHAR(10),
+    MSMH VARCHAR(10),
+    GiaTien INT,
+    FOREIGN KEY (MSNCC) REFERENCES NCC(MSNCC),
+    FOREIGN KEY (MSMH) REFERENCES MatHang(MSMH),
+    PRIMARY KEY(MSNCC,MSMH)
+);
+--data
+INSERT INTO NCC (MSNCC, TenNCC, DiaChi) VALUES 
+('NCC1', 'Cty A', 'Hai Ba Trung, Ha Noi'),
+('NCC2', 'Cty B', 'Hoan Kiem, Ha Noi'),
+('NCC3', 'Cty C', 'Huong Khe, Ha Tinh');
+INSERT INTO Mathang(MSMH,tenmh,mausac) VALUES
+('MH1', 'Mat hang 1', 'do'),
+('MH2', 'Mat hang 2', 'tim'),
+('MH3', 'Mat hang 3', 'xanh'),
+('MH4', 'Mat hang 4', 'do'),
+('MH5', 'Mat hang 5', 'do');
+INSERT INTO CungCap (MSNCC, MSMH, GiaTien) VALUES 
+('NCC1', 'MH1', 150),
+('NCC1', 'MH2', 250),
+('NCC1', 'MH3', 350),
+('NCC1', 'MH4', 50),
+('NCC1', 'MH5', 245),
+('NCC2', 'MH1', 50),
+('NCC2', 'MH2', 450),
+('NCC2', 'MH3', 250),
+('NCC2', 'MH4', 150);
+
+--B
+--1
+INSERT INTO NCC (MSNCC, TenNCC, DiaChi) VALUES
+('NCC2', 'Cty D', 'Nam Định'), --loi do NCC2 NCC3 da ton tai trong NCC
+('NCC3', 'Cty D', 'Nam Định'),
+('NCC4', 'Cty D', 'Nam Định'); --thanh cong do NCC4 chua ton tai
+
+INSERT INTO MatHang (MSMH, TenMH, MauSac) VALUES
+('MH5', 'Mat hang 6', 'tim'), --loi do MH5 da ton tai
+('MH6', 'Mat hang 6', 'tim'); --thanh cong do MH6 chua ton tai
+
+INSERT INTO CungCap (MSNCC, MSMH, GiaTien) VALUES
+('NCC3', 'MH7', 100), --loi do MH7 ko ton tai trong mathang
+('NCC3', 'MH4', 100); --thanh cong do da ton tai MH4
+
+--2 Kết nối hai bảng NCC và Cung cấp theo mã số NCC để biết được thông tin từng
+-- NCC và các mặt hàng mà họ cung ứng
+SELECT NCC.MSNCC , NCC.TenNCC, CungCap.MSMH,Mathang.tenmh,Mathang.mausac
+FROM NCC 
+INNER JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+INNER JOIN Mathang On CungCap.MSMH=MatHang.MSMH;
+
+--3 Thực hiện câu trên nhưng sắp xếp kết quả theo mã số NCC (MSNCC)
+SELECT NCC.MSNCC , NCC.TenNCC, CungCap.MSMH,Mathang.tenmh,Mathang.mausac
+FROM NCC 
+INNER JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+INNER JOIN Mathang On CungCap.MSMH=MatHang.MSMH
+ORDER BY NCC.MSNCC;
+
+--4 Kết nối hai bảng NCC và Cung cấp nhưng bỏ đi điều kiện kết nối hai bảng. So
+--sánh kết quả thu được với câu trên về số lượng bản ghi thu được, sự chính xác của
+--dữ liệu
+select NCC.MSNCC , NCC.TenNCC, CungCap.MSMH,Mathang.tenmh,Mathang.mausac
+FROM NCC,CungCap,Mathang;
+--so luong ban ghi thu duoc la tich cua 3 bang
+
+--5 Kết nối ba bảng NCC, Cung cấp và Mặt hàng để biết được thông tin từng NCC,
+--mặt hàng họ cung ứng, và mô tả về mặt hàng đó.
+SELECT NCC.MSNCC , NCC.TenNCC, CungCap.MSMH,Mathang.tenmh,Mathang.mausac,CungCap.GiaTien
+FROM NCC 
+INNER JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+INNER JOIN Mathang On CungCap.MSMH=MatHang.MSMH;
+
+--6 Đưa ra mã số của các hãng có cung ứng ít nhất 1 mặt hàng màu đỏ hoặc 1 mặt
+--hàng màu xanh
+SELECT DISTINCT NCC.MSNCC
+FROM NCC
+INNER JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+INNER JOIN Mathang On CungCap.MSMH=MatHang.MSMH
+WHERE Mathang.mausac IN ('do','xanh');
+
+-- c2
+SELECT DISTINCT MSNCC
+FROM NCC
+WHERE MSNCC IN(
+    SELECT MSNCC 
+    from CungCap JOIN Mathang ON CungCap.MSMH=MatHang.MSMH
+    WHERE Mathang.mausac = 'do' OR Mathang.mausac='xanh'
+);
+
+--7 Đưa ra mã số của hãng có cung ứng ít nhất 1 mặt hàng màu đỏ và 1 mặt hàng màu
+-- xanh
+SELECT DISTINCT MSNCC
+FROM NCC
+WHERE MSNCC IN(
+    SELECT MSNCC 
+    from CungCap JOIN Mathang ON CungCap.MSMH=MatHang.MSMH
+    WHERE Mathang.mausac = 'do'
+    INTERSECT
+    SELECT MSNCC 
+    from CungCap JOIN Mathang ON CungCap.MSMH=MatHang.MSMH
+    WHERE Mathang.mausac = 'xanh'
+);
+-- c2 
+SELECT DISTINCT NCC.MSNCC
+FROM NCC
+INNER JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+INNER JOIN Mathang On CungCap.MSMH=MatHang.MSMH
+WHERE Mathang.mausac IN ('do','xanh')
+group by NCC.MSNCC
+HAVING COUNT(DISTINCT MatHang.mausac) >= 2; 
+
+--8 Đưa ra danh sách các NCC (MSNCC, Tên NCC, Địa chỉ) không cung ứng mặt
+-- hàng MH1
+SELECT NCC.MSNCC,NCC.TenNCC,NCC.DiaChi
+FROM NCC
+WHERE NCC.MSNCC NOT IN(
+    SELECT DISTINCT MSNCC
+    FROM CungCap
+    WHERE CungCap.MSMH='MH1'
+);
+--9 Đưa ra danh sách các NCC không cung ứng bất kỳ mặt hàng nào
+SELECT NCC.MSNCC,NCC.TenNCC,NCC.DiaChi
+FROM NCC
+WHERE NCC.MSNCC NOT IN(
+    SELECT DISTINCT MSNCC
+    FROM CungCap
+);
+--10 Đưa ra danh sách các NCC và số lượng các mặt hàng mà họ cung ứng
+SELECT NCC.MSNCC,NCC.TenNCC,NCC.DiaChi,COUNT(CungCap.MSMH)
+FROM NCC LEFT JOIN CungCap On NCC.MSNCC=CungCap.MSNCC
+group by NCC.MSNCC;
+--11 Đưa ra mã số của các mặt hàng được cung cấp bởi ít nhất hai hãng cung ứng
+SELECT MSMH FROM CungCap
+GROUP BY MSMH
+HAVING COUNT(MSNCC) >= 2;
+--12 Đưa ra mã số của mặt hàng đắt nhất được cung cấp bởi Cty A
+SELECT CungCap.MSMH FROM CungCap
+where MSNCC='NCC1'
+ORDER BY giatien DESC
+limit 1;
+
+--13 Đưa ra cặp mã số của nhà cung ứng và mã sản phẩm kèm theo, sao cho nhà cung
+-- ứng thứ nhất cung cấp mặt hàng đó với giá cao hơn so với giá mà nhà cung cấp
+-- thứ hai đưa ra. Ví dụ một kết quả là NCC1 NCC2 MH1 bởi giá tiền mặt hàng MH1
+-- cung ứng bởi NCC1 cao hơn NCC2 đưa ra.
+select DISTINCT cc1.MSNCC as nha_cung_ung_gia_lon,cc2.MSNCC as nha_cung_ung_gia_nho,cc1.MSMH
+from CungCap cc1,CungCap cc2
+WHERE cc1.MSNCC <> cc2.MSNCC
+and cc1.giatien > cc2.giatien
+and cc1.MSMH = cc2.MSMH;
+--14 Đưa ra mã số của mặt hàng mà tất cả các hãng có cung ứng mặt hàng này đều bán
+-- với giá nhỏ hơn 200.
+SELECT CungCap.MSMH FROM CungCap
+GROUP BY MSMH
+HAVING MIN(giatien) < 200;
+
