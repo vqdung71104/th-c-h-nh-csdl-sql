@@ -1,0 +1,79 @@
+--A
+create database if not exists Lab02;
+USE Lab02;
+
+CREATE TABLE Gv(
+    GV VARCHAR(10) PRIMARY KEY,
+    Hoten VARCHAR(50) ,
+    DiaChi VARCHAR(50) ,
+    NgaySinh DATE 
+);
+CREATE TABLE DeTai(
+    DT VARCHAR(10) PRIMARY KEY,
+    TenDT VARCHAR(50) ,
+    Cap VARCHAR(10),
+    KinhPhi INT
+);
+CREATE TABLE ThamGia(
+    GV VARCHAR(10),
+    DT VARCHAR(10),
+    SoGio INT,
+    FOREIGN KEY(GV) REFERENCES Gv(GV),
+    FOREIGN KEY(DT) REFERENCES DeTai(DT),
+    PRIMARY KEY(GV,DT)
+);
+
+INSERT INTO Gv(GV,Hoten,DiaChi,NgaySinh) VALUES
+('GV01','Vũ Tuyết Trinh','Hoàng Mai, Hà Nội','10/10/1975'),
+('GV02','Nguyễn Nhật Quang','Hai Bà Trưng, Hà Nội','03/11/1976'),
+('GV03','Trần Đức Khánh','Đống Đa, Hà Nội','04/06/1977'),
+('GV04','Nguyễn Hồng Phương','Tây Hồ, Hà Nội','10/12/1983'),
+('GV05','Lê Thanh Hương','Hai Bà Trưng, Hà Nội','10/10/1976');
+INSERT INTO DeTai(DT,TenDT,Cap,KinhPhi) VALUES
+('DT01','Tính toán lưới','Nhà nước',700),
+('DT02','Phát hiện tri thức','Bộ',300),
+('DT03','Phân loại văn bản','Bộ',270),
+('DT04','Dịch tự động Anh Việt','Trường',30);
+INSERT INTO ThamGia(Gv,DT,SoGio) VALUES
+('GV01','DT01',100),
+('GV01','DT02',80),
+('GV01','DT03',80),
+('GV02','DT01',120),
+('GV02','DT03',140),
+('GV03','DT03',150),
+('GV04','DT04',180);
+
+--B
+--1
+SELECT * FROM Gv
+where DiaChi LIKE '%Hai Bà Trưng%'
+ORDER BY (Hoten) DESC;
+--2
+INSERT INTO Gv(GV,Hoten,DiaChi,NgaySinh) VALUES
+('GV06', 'Ngô Tuấn Phong', 'Đống Đa, Hà Nội', '1986-09-08');
+--3
+UPDATE Gv
+set DiaChi='Tây Hồ, Hà Nội'
+WHERE Hoten='Vũ Tuyết Trinh';
+--4
+DELETE FROM ThamGia
+WHERE GV='GV02'
+DELETE FROM Gv
+WHERE GV='GV02';
+--5
+SELECT Cap,sum(KinhPhi) as tongkinhphi FROM DeTai
+ORDER BY Cap;
+--6
+SELECT MaGV, SUM(SoGio) AS TongSoGio
+FROM ThamGia
+GROUP BY MaGV;
+--7
+SELECT * FROM Gv
+WHERE YEAR(NgaySinh) >= 1980;
+--c2
+SELECT * FROM Gv
+WHERE DATE_PART('year',NgaySinh) >= 1980;
+
+
+
+
