@@ -1,0 +1,148 @@
+Một thư viện lưu trữ các thông tin về sách, bạn đọc, phiếu mượn sách trong các bảng sau:
+Book (book_id, title, publisher, published_year, total_number_of_copies, current_number_of_copies);
+- book_id: char(10), primary key
+- tittle: char(50), not null
+- publisher: char(20), not null
+- published_year: integer, > 1900
+- total_number_of_copies: integer, >= 0
+- current_number_of_copies: integer, >= 0
+- total_number_of_copies >= current_number_of_copies
+Borrower(borrower_id, name, address, telephone_number);
+- borrower_id: char(10), primary key
+- name: char(50), not null
+- address: text
+- telephone_number: char(12) 
+BorrowCard(card_id, borrower_id, borrow_date, expected_return_date, actual_return_date);
+- card_id : int identity, primary key (auto increment)
+- borrower_id: char(10), foreign key → Borrower(borrower_id)
+- borrow_date: date, not null
+- expected_return_date: date, not null
+- actual_return_date: date
+BorrowCardItem(card_id, book_id, number_of_copies)
+- card_id, book_id: primary key
+- card_id: foreign key → BorrowCard(card_id)
+- book_id: foreign key → Book(book_id)
+Hãy viết các câu lệnh SQL thực hiện những công việc sau:
+1. (2 đ) Tạo các bảng trong cơ sở dữ liệu. Cần đảm bảo các ràng buộc trong cơ sở dữ liệu được 
+thỏa mãn. satisfied.
+2. (1 đ) Liệt kê các cuốn sách xuất bản trong năm 2020 bởi nhà xuất bản Wiley.
+3. (1 đ) Liệt kê tổng số đầu sách trong thư viện cho từng nhà xuất bản (publisher, total)
+4. (1 đ) Liệt kê top 5 cuốn sách (ID, title) “hottest” trong năm 2020 (top 5 cuốn sách được mượn 
+nhiều nhất trong năm 2020)
+5. (1 đ) Liệt kê tất cả bạn đọc (id, name, telephone number, address) chưa trả sách.
+6. (1 đ) Liệt kê tất cả bạn đọc (id, name, telephone number, address) trả sách muộn, sắp xếp theo 
+thứ tự alphabet của tên.
+7. (1 đ) Xóa những cuốn sách không có ai mượn
+8. (1 đ) Thêm 10 copies cho 5 cuốn sách được mượn nhiều nhất của nhà xuất bản Wiley
+9. (1 đ) Liệt kê các bạn đọc (id, name) mượn sách của cả nhà xuất bản Wiley và nhà xuất bản 
+Addison-Wesley
+
+  -- Cau 1: Tạo bảng
+CREATE TABLE Book (
+  book_id CHAR(10) PRIMARY KEY,
+  title CHAR(50) NOT NULL,
+  publisher CHAR(20) NOT NULL,
+  published_year INTEGER CHECK (published_year > 1900),
+  total_number_of_copies INTEGER CHECK (total_number_of_copies >= 0),
+  current_number_of_copies INTEGER CHECK (current_number_of_copies >= 0),
+  CHECK (total_number_of_copies >= current_number_of_copies)
+);
+
+CREATE TABLE Borrower (
+  borrower_id CHAR(10) PRIMARY KEY,
+  name CHAR(50) NOT NULL,
+  address TEXT,
+  telephone_number CHAR(12)
+);
+
+CREATE TABLE BorrowCard (
+  card_id SERIAL PRIMARY KEY,
+  borrower_id CHAR(10) REFERENCES Borrower(borrower_id),
+  borrow_date DATE NOT NULL,
+  expected_return_date DATE NOT NULL,
+  actual_return_date DATE
+);
+
+CREATE TABLE BorrowCardItem (
+  card_id INT,
+  book_id CHAR(10),
+  number_of_copies INTEGER,
+  PRIMARY KEY (card_id, book_id),
+  FOREIGN KEY (card_id) REFERENCES BorrowCard(card_id),
+  FOREIGN KEY (book_id) REFERENCES Book(book_id)
+);
+
+-- Cau 2: Liệt kê các cuốn sách xuất bản trong năm 2020 bởi nhà xuất bản Wiley.
+SELECT * FROM Book
+WHERE published_year = 2020 AND publisher = 'Wiley';
+
+-- Cau 3: Liệt kê tổng số đầu sách trong thư viện cho từng nhà xuất bản (publisher, total)
+SELECT publisher, COUNT(*) AS total
+FROM Book 
+GROUP BY publisher;
+
+-- Cau 4: Liệt kê top 5 cuốn sách (ID, title) “hottest” trong năm 2020 (top 5 cuốn sách được mượn nhiều nhất trong năm 2020)
+SELECT Book.book_id, Book.title
+FROM Book
+JOIN BorrowCardItem ON Book.book_id = BorrowCardItem.book_id
+JOIN BorrowCard ON BorrowCardItem.card_id = BorrowCard.card_id
+WHERE EXTRACT(YEAR FROM BorrowCard.borrow_date) = 2020
+GROUP BY Book.book_id, Book.title
+ORDER BY COUNT(*) DESC 
+LIMIT 5;
+
+-- Cau 5: Liệt kê tất cả bạn đọc (id, name, telephone number, address) chưa trả sách.
+SELECT Borrower.borrower_id, Borrower.name, Borrower.telephone_number, Borrower.address
+FROM Borrower
+LEFT JOIN BorrowCard ON Borrower.borrower_id = BorrowCard.borrower_id
+WHERE BorrowCard.actual_return_date IS NULL;
+
+-- Cau 6: Liệt kê tất cả bạn đọc (id, name, telephone number, address) trả sách muộn, sắp xếp theo thứ tự alphabet của tên.
+SELECT Borrower.borrower_id, Borrower.name, Borrower.telephone_number, Borrower.address
+FROM Borrower
+JOIN BorrowCard ON Borrower.borrower_id = BorrowCard.borrower_id
+WHERE BorrowCard.actual_return_date > BorrowCard.expected_return_date
+ORDER BY BorrowCard.name;
+
+
+-- Cau 7: Xóa những cuốn sách không có ai mượn
+DELETE FROM Book
+WHERE book_id NOT IN (
+  SELECT book_id
+  FROM BorrowCardItem
+);
+
+-- Cau 8: Thêm 10 copies cho 5 cuốn sách được mượn nhiều nhất của nhà xuất bản Wiley
+UPDATE Book
+SET total_number_of_copies = total_number_of_copies + 10
+WHERE book_id IN (
+  SELECT book_id
+  FROM (
+    SELECT BorrowCardItem.book_id, COUNT(*) AS borrow_count
+    FROM BorrowCardItem
+    JOIN BorrowCard ON BorrowCardItem.card_id = BorrowCard.card_id
+    JOIN Book ON BorrowCardItem.book_id = Book.book_id
+    WHERE Book.publisher = 'Wiley'
+    GROUP BY BorrowCardItem.book_id
+    ORDER BY borrow_count DESC
+    LIMIT 5
+  ) AS top_books
+);
+
+
+-- Cau 9: Liệt kê các bạn đọc (id, name) mượn sách của cả nhà xuất bản Wiley và nhà xuất bản Addison-Wesley
+SELECT Borrower.borrower_id, Borrower.name
+FROM Borrower
+JOIN BorrowCard ON Borrower.borrower_id = BorrowCard.borrower_id
+JOIN BorrowCardItem ON BorrowCard.card_id = BorrowCardItem.card_id
+JOIN Book ON BorrowCardItem.book_id = Book.book_id
+WHERE Book.publisher IN ('Wiley', 'Addison-Wesley')
+GROUP BY Borrower.borrower_id, Borrower.name
+HAVING COUNT(DISTINCT Book.publisher) = 2;
+
+
+
+
+  
+
+  
